@@ -36,7 +36,7 @@ generate_site.py         → dist/ (실제 배포되는 정적 HTML 전체)
 - 저장소는 Public(GitHub Pages가 개인 계정 Private 저장소에서 유료 플랜 없이 비활성화되는 제약 때문). 코드에 시크릿 없음, API 키는 Actions secrets(`DATA_GO_KR_API_KEY`)에만 있음 — 공개해도 안전.
 - 워크플로 파일(`.github/workflows/*.yml`)을 push하려면 PAT에 `workflow` scope 필요(`repo`만으로는 거부됨).
 - Settings → Actions → General → Actions permissions가 "Disable actions"로 돼 있으면 어떤 워크플로도 안 돌아감 — "Allow all actions and reusable workflows"로 설정+저장 필요.
+- 커스텀 도메인 확정: `yoyangcompare.com` (Cloudflare Registrar에서 구매, DNS는 Cloudflare에서 'DNS 전용'(회색 구름)으로 GitHub Pages를 가리킴). `generate_site.py`의 `SITE_URL`에 반영됨. 도메인을 바꾸면 이 상수만 바꾸고 재배포.
 
 ## 아직 미정/보류
-- 커스텀 도메인 미정 — 현재 `generate_site.py`의 `SITE_URL`은 GitHub Pages 주소(`https://jewonshin.github.io/care-compare`). 도메인 정하면 바꾸고 재배포(sitemap/canonical 갱신).
 - `refresh-data.yml`의 첫 실제 스케줄 실행(과거엔 주1회였고 방금 매일로 변경) 모니터링 필요.
