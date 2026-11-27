@@ -295,7 +295,7 @@ function renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWa
 def render_home(data, generated_at):
     regions = sorted(set(d["region"] for d in data))
     gu_links = "\n".join(
-        f'<a href="/gu/{GU_SLUG[r]}/">{r}</a>' for r in regions if r in GU_SLUG
+        f'<a href="gu/{GU_SLUG[r]}/">{r}</a>' for r in regions if r in GU_SLUG
     )
 
     html = f"""<!DOCTYPE html>
@@ -505,7 +505,7 @@ def render_district(region, items, generated_at):
   <noscript><div id="results">{cards_html}</div></noscript>
   <div id="results">{cards_html}</div>
 
-  <a class="backlink" href="/">← 다른 구 보기 / 전체 비교로 돌아가기</a>
+  <a class="backlink" href="../../">← 다른 구 보기 / 전체 비교로 돌아가기</a>
 
   {FOOTER_HTML}
   <p class="note" style="text-align:center;">데이터 기준: {generated_at}</p>
