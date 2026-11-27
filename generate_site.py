@@ -21,6 +21,7 @@ import html
 import json
 import re
 from pathlib import Path
+from urllib.parse import quote
 from datetime import datetime, timezone, timedelta
 
 BASE = Path(__file__).parent
@@ -130,8 +131,15 @@ def render_facility_card(d):
     addr = html.escape(d["addr"]) if d.get("addr") else None
     tel = html.escape(d["tel"]) if d.get("tel") else None
 
+    tel_html = (
+        f' · <a class="nw" href="tel:{re.sub(r"[^0-9+]", "", d["tel"])}">📞 {tel}</a>' if tel else ""
+    )
+    map_html = (
+        f' <a class="nw" href="https://map.naver.com/p/search/{quote(d["addr"])}" target="_blank" rel="noopener">지도</a>'
+        if addr else ""
+    )
     addr_line = (
-        f'<div class="meta">{addr}{" · <span class=\"nw\">" + tel + "</span>" if tel else ""}</div>'
+        f'<div class="meta">{addr}{map_html}{tel_html}</div>'
         if addr else '<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>'
     )
 
@@ -178,10 +186,6 @@ h2.page-h2{font-size:17px;margin:28px 0 10px;}
 .step{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;}
 .step h2{font-size:15px;margin:0 0 12px;color:var(--ink);}
 .qmark{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;text-align:center;line-height:20px;font-size:12px;margin-right:8px;}
-.options{display:flex;flex-wrap:wrap;gap:8px;}
-button.opt{border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer;color:var(--ink);}
-button.opt:hover{border-color:var(--accent);}
-button.opt.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 select{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;background:#fff;color:var(--ink);}
 .toggle{display:flex;align-items:center;gap:8px;font-size:14px;}
 .toggle input{width:18px;height:18px;}
@@ -196,6 +200,13 @@ select{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-s
 .badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
 .badge.full{background:#f3f4f6;color:#9ca3af;}
 .meta{color:var(--muted);font-size:13px;margin-top:4px;}
+.meta a{color:var(--accent);text-decoration:none;font-weight:500;}
+.meta a:hover{text-decoration:underline;}
+.infobox{background:var(--accent-soft);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink);margin-bottom:14px;}
+.infobox p{margin:0;}
+.infobox p+p{margin-top:8px;}
+.gu-section{margin-top:36px;}
+.gu-section .note{margin-top:0;}
 .cost-row{display:flex;gap:18px;margin-top:10px;font-size:13px;flex-wrap:wrap;}
 .cost-row .item b{display:block;font-size:15px;color:var(--ink);}
 .cost-row .item span{color:var(--muted);font-size:12px;}
@@ -204,7 +215,6 @@ select{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-s
 .empty{text-align:center;color:var(--muted);padding:40px 0;font-size:14px;}
 .note{font-size:12px;color:var(--muted);margin-top:4px;}
 footer{color:var(--muted);font-size:12px;text-align:center;margin-top:30px;}
-.hospital-guide{background:var(--accent-soft);border-radius:12px;padding:16px 18px;font-size:14px;}
 .gulist{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:14px 0 6px;}
 .gulist a{display:block;text-align:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 6px;font-size:13px;color:var(--ink);text-decoration:none;}
 .gulist a:hover{border-color:var(--accent);color:var(--accent);}
@@ -288,7 +298,9 @@ function renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWa
         <div class="total">예상 월 총비용 <b>${total}</b></div>
       `;
     }
-    const addrLine = d.addr ? `<div class="meta">${esc(d.addr)}${d.tel ? ' · <span class="nw">' + esc(d.tel) + '</span>' : ''}</div>` : `<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>`;
+    const telHtml = d.tel ? ` · <a class="nw" href="tel:${esc(d.tel.replace(/[^0-9+]/g, ''))}">📞 ${esc(d.tel)}</a>` : '';
+    const mapHtml = d.addr ? ` <a class="nw" href="https://map.naver.com/p/search/${encodeURIComponent(d.addr)}" target="_blank" rel="noopener">지도</a>` : '';
+    const addrLine = d.addr ? `<div class="meta">${esc(d.addr)}${mapHtml}${telHtml}</div>` : `<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>`;
     const addrTokens = d.addr ? d.addr.trim().split(/\\s+/) : [];
     const mismatchNote = (addrTokens.length && !(addrTokens[0].startsWith('서울') && addrTokens.includes(d.region)))
       ? `<div class="warnbox" style="margin-top:8px;">⚠ 행정구역상 ${esc(d.region)} 소속으로 등록되어 있지만, 실제 주소는 위와 같이 다른 지역이에요. 거리를 꼭 확인하세요.</div>`
@@ -330,25 +342,6 @@ def render_home(data, generated_at):
   <h1>서울 요양원·주야간보호 비교 (베타)</h1>
   <p class="sub">공공데이터포털(국민건강보험공단) 장기요양기관 데이터 기반. 빈자리·예상 비용을 조건별로 바로 계산해 드려요.</p>
 
-  <h2 class="page-h2">구별로 바로 보기</h2>
-  <div class="gulist">
-  {gu_links}
-  </div>
-
-  <div class="step" id="step0" style="margin-top:20px;">
-    <h2><span class="qmark">0</span>매일 의료적 처치(콧줄·흡인·욕창 관리 등)가 필요하신가요?</h2>
-    <div class="options">
-      <button class="opt" data-step0="yes">예, 매일 처치가 필요해요</button>
-      <button class="opt active" data-step0="no">아니요 / 잘 모르겠어요</button>
-    </div>
-  </div>
-
-  <div id="hospitalGuide" style="display:none" class="step">
-    <div class="hospital-guide">
-      매일 의료적 처치가 필요하시면 <b>요양병원</b>이 더 맞을 수 있어요. 요양병원은 의사·간호인력이 상주하지만, 이 사이트가 다루는 노인요양시설·주야간보호와는 데이터 출처와 비용 구조가 달라 아직 준비 중이에요. (국민건강보험공단 1577-1000 또는 담당 의료진과 상의해 보세요.)
-    </div>
-  </div>
-
   <div id="mainFlow">
     <div class="step">
       <h2><span class="qmark">1</span>어느 구에서 찾으세요?</h2>
@@ -383,9 +376,9 @@ def render_home(data, generated_at):
       <div class="note">빈자리 수치는 공단에 등록된 정원·현원 기준이라 실제 입소 가능 여부는 시설에 다시 확인하는 게 안전해요.</div>
     </div>
 
-    <div class="step">
-      <h2><span class="qmark">4</span>참고: 상태(치매·와상 등)</h2>
-      <div class="note">현재 API로는 시설별 치매·와상 수용 가능 여부를 구분할 수 없어요. 아래 목록은 빈자리가 넉넉한 곳부터 보여드리지만, 특정 상태(와상·콧줄·치매)를 받아주는지는 반드시 시설에 직접 문의해 주세요.</div>
+    <div class="infobox">
+      <p><b>치매·와상 등 상태별 수용 여부</b>는 공공데이터로 구분할 수 없어요. 특정 상태를 받아주는지는 시설에 직접 전화로 확인해 주세요(카드의 📞 번호를 누르면 바로 연결돼요).</p>
+      <p><b>매일 의료적 처치(콧줄·흡인·욕창 관리 등)</b>가 필요하면 의사·간호인력이 상주하는 <b>요양병원</b>이 더 맞을 수 있어요. 요양병원은 이 사이트에서 아직 다루지 않으니 공단(1577-1000)이나 담당 의료진과 상의해 보세요.</p>
     </div>
 
     <div class="result-head">
@@ -394,6 +387,14 @@ def render_home(data, generated_at):
     </div>
     <div id="results"></div>
   </div>
+
+  <section class="gu-section">
+    <h2 class="page-h2">구별 상세 페이지</h2>
+    <p class="note">구마다 기관 수·빈자리·비용 범위를 정리한 페이지예요.</p>
+    <div class="gulist">
+    {gu_links}
+    </div>
+  </section>
 
   {FOOTER_HTML}
   <p class="note" style="text-align:center;">데이터 기준: {generated_at}</p>
@@ -405,17 +406,6 @@ def render_home(data, generated_at):
 function regionsFromData(data){{
   const set = new Set(data.map(d => d.region));
   return Array.from(set).sort();
-}}
-
-function setupStep0(){{
-  const buttons = document.querySelectorAll('[data-step0]');
-  buttons.forEach(b => b.addEventListener('click', () => {{
-    buttons.forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    const isYes = b.dataset.step0 === 'yes';
-    document.getElementById('hospitalGuide').style.display = isYes ? 'block' : 'none';
-    document.getElementById('mainFlow').style.display = isYes ? 'none' : 'block';
-  }}));
 }}
 
 fetch('data.json').then(r => r.json()).then(data => {{
@@ -438,7 +428,6 @@ fetch('data.json').then(r => r.json()).then(data => {{
   }}
 
   [sel, gradeEl, burdenEl, vacEl].forEach(el => el.addEventListener('change', doRender));
-  setupStep0();
   doRender();
 }}).catch(err => {{
   document.getElementById('results').innerHTML = '<div class="empty">데이터를 불러오지 못했어요.</div>';
