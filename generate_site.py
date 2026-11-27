@@ -131,7 +131,7 @@ def render_facility_card(d):
     tel = html.escape(d["tel"]) if d.get("tel") else None
 
     addr_line = (
-        f'<div class="meta">{addr}{" · " + tel if tel else ""}</div>'
+        f'<div class="meta">{addr}{" · <span class=\"nw\">" + tel + "</span>" if tel else ""}</div>'
         if addr else '<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>'
     )
 
@@ -147,14 +147,12 @@ def render_facility_card(d):
     return f"""
     <div class="card">
       <div class="card-top">
-        <div>
-          <div class="card-name">{name}</div>
-          <div class="meta">{TYPE_LABEL.get(d["type"], d["type"])} · {d["region"]} · 정원 {d["cap"]}명 / 현원 {d["now"]}명</div>
-          {addr_line}
-          {mismatch_note}
-        </div>
+        <div class="card-name">{name}</div>
         {vac_badge}
       </div>
+      <div class="meta"><span class="nw">{TYPE_LABEL.get(d["type"], d["type"])}</span> · <span class="nw">{d["region"]}</span> · <span class="nw">정원 {d["cap"]}명 / 현원 {d["now"]}명</span></div>
+      {addr_line}
+      {mismatch_note}
       {cost_html}
     </div>
     """
@@ -166,7 +164,8 @@ SHARED_CSS = """
   --accent:#2f6f4f; --accent-soft:#e7f2ec; --border:#e5e7eb; --warn:#b45309; --warn-bg:#fff7ed;
 }
 *{box-sizing:border-box;}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;word-break:keep-all;overflow-wrap:break-word;}
+.nw{white-space:nowrap;}
 .wrap{max-width:760px;margin:0 auto;padding:24px 16px 80px;}
 h1{font-size:20px;margin:0 0 4px;}
 h2.page-h2{font-size:17px;margin:28px 0 10px;}
@@ -188,6 +187,7 @@ select{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-s
 .count{color:var(--muted);font-size:13px;}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;}
 .card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+.card-top .badge{flex-shrink:0;margin-top:1px;}
 .card-name{font-size:15px;font-weight:600;}
 .badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
 .badge.full{background:#f3f4f6;color:#9ca3af;}
@@ -284,20 +284,18 @@ function renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWa
         <div class="total">예상 월 총비용 <b>${total}</b></div>
       `;
     }
-    const addrLine = d.addr ? `<div class="meta">${esc(d.addr)}${d.tel ? ' · ' + esc(d.tel) : ''}</div>` : `<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>`;
+    const addrLine = d.addr ? `<div class="meta">${esc(d.addr)}${d.tel ? ' · <span class="nw">' + esc(d.tel) + '</span>' : ''}</div>` : `<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>`;
     const mismatchNote = (d.addr && !d.addr.includes(d.region))
       ? `<div class="warnbox" style="margin-top:8px;">⚠ 행정구역상 ${esc(d.region)} 소속으로 등록되어 있지만, 실제 주소는 위와 같이 다른 지역이에요. 거리를 꼭 확인하세요.</div>`
       : '';
     card.innerHTML = `
       <div class="card-top">
-        <div>
-          <div class="card-name">${esc(d.name)}</div>
-          <div class="meta">${TYPE_LABEL[d.type] || d.type} · ${esc(d.region)} · 정원 ${d.cap}명 / 현원 ${d.now}명</div>
-          ${addrLine}
-          ${mismatchNote}
-        </div>
+        <div class="card-name">${esc(d.name)}</div>
         ${vacBadge}
       </div>
+      <div class="meta"><span class="nw">${TYPE_LABEL[d.type] || d.type}</span> · <span class="nw">${esc(d.region)}</span> · <span class="nw">정원 ${d.cap}명 / 현원 ${d.now}명</span></div>
+      ${addrLine}
+      ${mismatchNote}
       ${costHtml}
     `;
     resultsEl.appendChild(card);
