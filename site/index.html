@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>서울 요양원·주야간보호 비교 (베타)</title>
+<style>
+  :root{
+    --bg:#f7f7f5; --card:#ffffff; --ink:#1f2328; --muted:#6b7280;
+    --accent:#2f6f4f; --accent-soft:#e7f2ec; --border:#e5e7eb; --warn:#b45309; --warn-bg:#fff7ed;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;}
+  .wrap{max-width:760px;margin:0 auto;padding:24px 16px 80px;}
+  h1{font-size:20px;margin:0 0 4px;}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 24px;}
+  .step{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;}
+  .step h2{font-size:15px;margin:0 0 12px;color:var(--ink);}
+  .qmark{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;text-align:center;line-height:20px;font-size:12px;margin-right:8px;}
+  .options{display:flex;flex-wrap:wrap;gap:8px;}
+  button.opt{border:1px solid var(--border);background:#fff;border-radius:999px;padding:8px 14px;font-size:14px;cursor:pointer;color:var(--ink);}
+  button.opt:hover{border-color:var(--accent);}
+  button.opt.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+  select{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;background:#fff;color:var(--ink);}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:14px;}
+  .toggle input{width:18px;height:18px;}
+  .warnbox{background:var(--warn-bg);border:1px solid #fcd9a8;color:var(--warn);border-radius:10px;padding:12px 14px;font-size:13px;margin-top:10px;}
+  .result-head{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px;}
+  .result-head h2{font-size:16px;margin:0;}
+  .count{color:var(--muted);font-size:13px;}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;}
+  .card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
+  .card-name{font-size:15px;font-weight:600;}
+  .badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
+  .badge.full{background:#f3f4f6;color:#9ca3af;}
+  .meta{color:var(--muted);font-size:13px;margin-top:4px;}
+  .cost-row{display:flex;gap:18px;margin-top:10px;font-size:13px;flex-wrap:wrap;}
+  .cost-row .item b{display:block;font-size:15px;color:var(--ink);}
+  .cost-row .item span{color:var(--muted);font-size:12px;}
+  .total{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);font-size:14px;}
+  .total b{font-size:17px;color:var(--accent);}
+  .empty{text-align:center;color:var(--muted);padding:40px 0;font-size:14px;}
+  .note{font-size:12px;color:var(--muted);margin-top:4px;}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:30px;}
+  .hospital-guide{background:var(--accent-soft);border-radius:12px;padding:16px 18px;font-size:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>서울 요양원·주야간보호 비교 (베타)</h1>
+  <p class="sub">공공데이터포털(국민건강보험공단) 장기요양기관 데이터 기반. 빈자리·예상 비용을 조건별로 바로 계산해 드려요.</p>
+
+  <div class="step" id="step0">
+    <h2><span class="qmark">0</span>매일 의료적 처치(콧줄·흡인·욕창 관리 등)가 필요하신가요?</h2>
+    <div class="options">
+      <button class="opt" data-step0="yes">예, 매일 처치가 필요해요</button>
+      <button class="opt active" data-step0="no">아니요 / 잘 모르겠어요</button>
+    </div>
+  </div>
+
+  <div id="hospitalGuide" style="display:none" class="step">
+    <div class="hospital-guide">
+      매일 의료적 처치가 필요하시면 <b>요양병원</b>이 더 맞을 수 있어요. 요양병원은 의사·간호인력이 상주하지만, 이 사이트가 다루는 노인요양시설·주야간보호와는 데이터 출처와 비용 구조가 달라 아직 준비 중이에요. (국민건강보험공단 1577-1000 또는 담당 의료진과 상의해 보세요.)
+    </div>
+  </div>
+
+  <div id="mainFlow">
+    <div class="step">
+      <h2><span class="qmark">1</span>어느 구에서 찾으세요?</h2>
+      <select id="regionSelect"></select>
+    </div>
+
+    <div class="step">
+      <h2><span class="qmark">2</span>장기요양등급과 본인부담 유형을 알려주세요</h2>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;">
+        <select id="gradeSelect">
+          <option value="1">1등급</option>
+          <option value="2">2등급</option>
+          <option value="3">3등급</option>
+          <option value="4">4등급</option>
+          <option value="5">5등급</option>
+        </select>
+        <select id="burdenSelect">
+          <option value="일반">일반대상자</option>
+          <option value="40%감경">40% 감경대상자</option>
+          <option value="60%감경">60% 감경대상자</option>
+          <option value="의료급여수급권자">의료급여수급권자(면제)</option>
+        </select>
+      </div>
+      <div class="note">등급·부담유형에 따라 아래 예상 비용이 자동으로 바뀌어요. 모르면 일단 "일반대상자"로 보시고, 나중에 공단(1577-1000)에 확인해 보세요.</div>
+      <div class="note">※ 급여비용은 보건복지부고시(2025-247호, 2026.1.1 시행) 기준 "표준 배치비율·대표 이용시간" 가정값이에요. 요양보호사 배치비율이 기준 미달인 시설은 노인요양시설 기준 1일 최대 4,550원(월 약 13.7만원) 더 낮을 수 있고, 주야간보호는 실제 이용시간(3~13시간+)에 따라 수가가 달라요. 정확한 금액은 반드시 기관에 다시 확인하세요.</div>
+      <div id="gradeWarn" class="warnbox" style="display:none"></div>
+    </div>
+
+    <div class="step">
+      <h2><span class="qmark">3</span>지금 빈자리가 있는 곳만 볼까요?</h2>
+      <label class="toggle"><input type="checkbox" id="vacancyOnly" checked> 빈자리 있는 곳만 보기</label>
+      <div class="note">빈자리 수치는 공단에 등록된 정원·현원 기준이라 실제 입소 가능 여부는 시설에 다시 확인하는 게 안전해요.</div>
+    </div>
+
+    <div class="step">
+      <h2><span class="qmark">4</span>참고: 상태(치매·와상 등)</h2>
+      <div class="note">현재 API로는 시설별 치매·와상 수용 가능 여부를 구분할 수 없어요. 아래 목록은 빈자리가 넉넉한 곳부터 보여드리지만, 특정 상태(와상·콧줄·치매)를 받아주는지는 반드시 시설에 직접 문의해 주세요.</div>
+    </div>
+
+    <div class="result-head">
+      <h2>조건에 맞는 시설</h2>
+      <span class="count" id="resultCount"></span>
+    </div>
+    <div id="results"></div>
+  </div>
+
+  <footer>
+    본 저작물은 '국민건강보험공단'에서 작성하여 공공데이터포털에 개방한 '장기요양기관 검색 서비스' 데이터를 이용하였으며, 해당 데이터는 'www.data.go.kr'에서 무료로 내려받을 수 있습니다.<br><br>
+    급여비용은 2026년 1월 보건복지부고시(제2025-247호) 기준 추정치이며 실제 청구액과 다를 수 있습니다. 비급여(식재료비 등)는 기관이 공시한 최근 등록값 기준 추정 범위입니다. 정확한 금액과 입소 가능 여부는 반드시 해당 기관 또는 국민건강보험공단(1577-1000)에 다시 확인하세요.<br><br>
+    이 사이트는 어떤 장기요양기관으로부터도 소개·알선 대가나 입소 연계 수수료를 받지 않으며, 받을 계획도 없습니다. 노인장기요양보험법 제35조제6항은 영리 목적으로 금전·물품 등을 제공하거나 약속하여 수급자를 특정 기관에 소개·알선·유인하는 행위를 금지하고 있습니다.
+  </footer>
+</div>
+
+<script>
+// ---- 급여 본인부담금 계산 상수 (ltc_rates.py와 동일 로직, 2026-11-27 기준) ----
+const DAILY_RATE = {
+  A03: {1:93070, 2:86340, 3:81540, 4:81540, 5:81540},
+  A04: {1:74590, 2:69210, 3:63800, 4:63800, 5:63800},
+  B03: {1:69730, 2:64590, 3:59640, 4:58010, 5:56360},
+};
+const BENEFIT_CATEGORY = {A03:"시설", A04:"시설", B03:"재가"};
+const COPAY_RATE = {
+  "일반": {"시설":0.20, "재가":0.15},
+  "40%감경": {"시설":0.12, "재가":0.09},
+  "60%감경": {"시설":0.08, "재가":0.06},
+  "의료급여수급권자": {"시설":0.0, "재가":0.0},
+};
+const TYPE_LABEL = {A03:"노인요양시설", A04:"노인요양공동생활가정", B03:"주야간보호"};
+
+function calcMonthlyCopay(type, grade, burden, days=30){
+  const daily = DAILY_RATE[type]?.[grade];
+  if(daily == null) return null;
+  const cat = BENEFIT_CATEGORY[type];
+  const rate = COPAY_RATE[burden][cat];
+  return Math.round(daily * rate) * days;
+}
+
+const fmt = n => n.toLocaleString('ko-KR') + '원';
+const esc = s => (s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let DATA = [];
+let REGIONS = [];
+
+function regionsFromData(data){
+  const set = new Set(data.map(d => d.region));
+  return Array.from(set).sort();
+}
+
+function render(){
+  const region = document.getElementById('regionSelect').value;
+  const grade = document.getElementById('gradeSelect').value;
+  const burden = document.getElementById('burdenSelect').value;
+  const vacancyOnly = document.getElementById('vacancyOnly').checked;
+
+  const gradeWarn = document.getElementById('gradeWarn');
+  if(['3','4','5'].includes(grade)){
+    gradeWarn.style.display = 'block';
+    gradeWarn.textContent = '3~5등급은 원칙적으로 재가급여만 이용 가능하며, 요양원(시설급여) 입소는 등급판정위원회의 예외 심의를 거친 경우에만 가능해요. 아래 요양원 비용은 예외 입소가 인정됐다고 가정한 참고값이에요.';
+  } else {
+    gradeWarn.style.display = 'none';
+  }
+
+  let list = DATA.filter(d => d.region === region);
+  if(vacancyOnly) list = list.filter(d => d.vac > 0);
+
+  list = list.map(d => {
+    const copay = calcMonthlyCopay(d.type, grade, burden);
+    const totalMin = copay != null ? copay + d.nbMin : null;
+    const totalMax = copay != null ? copay + d.nbMax : null;
+    return {...d, copay, totalMin, totalMax};
+  });
+
+  // 빈자리 많은 순 -> 그 안에서 예상 총비용(최저) 낮은 순
+  list.sort((a,b) => (b.vac - a.vac) || ((a.totalMin ?? 1e15) - (b.totalMin ?? 1e15)));
+
+  document.getElementById('resultCount').textContent = `${list.length}곳`;
+  const results = document.getElementById('results');
+  results.innerHTML = '';
+
+  if(list.length === 0){
+    results.innerHTML = '<div class="empty">조건에 맞는 시설이 없어요. 빈자리 조건을 해제해 보세요.</div>';
+    return;
+  }
+
+  for(const d of list){
+    const card = document.createElement('div');
+    card.className = 'card';
+    const vacBadge = d.vac > 0
+      ? `<span class="badge">빈자리 ${d.vac}명</span>`
+      : `<span class="badge full">빈자리 없음</span>`;
+
+    let costHtml = '';
+    if(d.copay == null){
+      costHtml = `<div class="note">이 등급은 해당 시설유형에서 수가 정보가 없어요.</div>`;
+    } else {
+      const nb = d.nbMin === 0 && d.nbMax === 0
+        ? '정보 없음(기관 문의)'
+        : (d.nbMin === d.nbMax ? fmt(d.nbMin) : `${fmt(d.nbMin)} ~ ${fmt(d.nbMax)}`);
+      const nbDateNote = d.nbDate ? ` <span class="note">(${d.nbDate} 등록 기준)</span>` : '';
+      const total = d.totalMin === d.totalMax ? fmt(d.totalMin) : `${fmt(d.totalMin)} ~ ${fmt(d.totalMax)}`;
+      costHtml = `
+        <div class="cost-row">
+          <div class="item"><span>급여 본인부담(월)</span><b>${fmt(d.copay)}</b></div>
+          <div class="item"><span>비급여 추정(월)</span><b>${nb}</b>${nbDateNote}</div>
+        </div>
+        <div class="total">예상 월 총비용 <b>${total}</b></div>
+      `;
+    }
+
+    const addrLine = d.addr
+      ? `<div class="meta">${esc(d.addr)}${d.tel ? ' · ' + esc(d.tel) : ''}</div>`
+      : `<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>`;
+
+    card.innerHTML = `
+      <div class="card-top">
+        <div>
+          <div class="card-name">${esc(d.name)}</div>
+          <div class="meta">${TYPE_LABEL[d.type] || d.type} · ${esc(d.region)} · 정원 ${d.cap}명 / 현원 ${d.now}명</div>
+          ${addrLine}
+        </div>
+        ${vacBadge}
+      </div>
+      ${costHtml}
+    `;
+    results.appendChild(card);
+  }
+}
+
+function setupStep0(){
+  const buttons = document.querySelectorAll('[data-step0]');
+  buttons.forEach(b => b.addEventListener('click', () => {
+    buttons.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const isYes = b.dataset.step0 === 'yes';
+    document.getElementById('hospitalGuide').style.display = isYes ? 'block' : 'none';
+    document.getElementById('mainFlow').style.display = isYes ? 'none' : 'block';
+  }));
+}
+
+fetch('data.json').then(r => r.json()).then(data => {
+  DATA = data;
+  REGIONS = regionsFromData(data);
+  const sel = document.getElementById('regionSelect');
+  sel.innerHTML = REGIONS.map(r => `<option value="${r}">${r}</option>`).join('');
+
+  ['regionSelect','gradeSelect','burdenSelect','vacancyOnly'].forEach(id => {
+    document.getElementById(id).addEventListener('change', render);
+  });
+  setupStep0();
+  render();
+}).catch(err => {
+  document.getElementById('results').innerHTML = '<div class="empty">데이터를 불러오지 못했어요.</div>';
+});
+</script>
+</body>
+</html>

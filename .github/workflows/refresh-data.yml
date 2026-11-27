@@ -1,0 +1,62 @@
+name: Refresh care-facility data
+
+on:
+  schedule:
+    # 매주 월요일 20:00 UTC = 화요일 05:00 KST (트래픽 적은 새벽 시간대)
+    - cron: "0 20 * * 1"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch facility list + vacancy + non-benefit (data.go.kr)
+        env:
+          DATA_GO_KR_API_KEY: ${{ secrets.DATA_GO_KR_API_KEY }}
+        run: python3 fetch_longterm_care.py
+
+      - name: Promote this run's merged files to the canonical names
+        run: |
+          mv -f output/seoul_all.csv output/seoul_all_fixed.csv
+          mv -f output/seoul_all_nonbenefit.csv output/seoul_all_nonbenefit_fixed.csv
+
+      - name: Clean up per-district intermediate files
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from fetch_longterm_care import SEOUL_DISTRICTS
+          out = Path("output")
+          for name, code in SEOUL_DISTRICTS.items():
+              for suffix in ("", "_nonbenefit"):
+                  p = out / f"{code}_{name}{suffix}.csv"
+                  if p.exists():
+                      p.unlink()
+          PY
+
+      - name: Fetch address/phone (incremental, skips already-known facilities)
+        env:
+          DATA_GO_KR_API_KEY: ${{ secrets.DATA_GO_KR_API_KEY }}
+        run: python3 fetch_general_status.py
+
+      - name: Aggregate non-benefit monthly ranges
+        run: python3 aggregate_nonbenefit.py
+
+      - name: Build site/data.json
+        run: python3 build_data.py
+
+      - name: Commit refreshed data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add output/ site/data.json
+          git diff --cached --quiet && echo "변경 없음 — 커밋 생략" || git commit -m "chore: 주간 데이터 갱신 ($(date -u +%Y-%m-%d))"
+          git push
