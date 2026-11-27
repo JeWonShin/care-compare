@@ -42,7 +42,7 @@ python3 generate_site.py
    `DATA_GO_KR_API_KEY` 시크릿 추가 (공공데이터포털 마이페이지의 일반 인증키/Decoding).
 3. **Settings → Pages → Build and deployment → Source**를 **GitHub Actions**로 설정.
 4. `main` 브랜치에 push하면 `.github/workflows/deploy.yml`이 `dist/`를 빌드해서 자동 배포.
-5. `.github/workflows/refresh-data.yml`이 매주 월요일(UTC) 자동으로 전체 데이터를 재수집하고,
+5. `.github/workflows/refresh-data.yml`이 매일 새벽(KST 05:00) 자동으로 전체 데이터를 재수집하고,
    변경이 있으면 커밋·push → 그 push가 다시 `deploy.yml`을 트리거해서 사이트가 자동 갱신됨.
 6. 커스텀 도메인을 쓰려면 Pages 설정에서 도메인 연결 후, `generate_site.py` 상단의
    `SITE_URL` 상수를 실제 도메인으로 바꾸고 재배포(sitemap·canonical URL에 반영됨).
