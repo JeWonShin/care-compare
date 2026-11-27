@@ -135,6 +135,15 @@ def render_facility_card(d):
         if addr else '<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>'
     )
 
+    # 드물게 행정구역상 등록된 구와 실제 주소의 구가 다른 기관이 있음(예: 땅값 때문에 경기/강원 등
+    # 다른 지역에 지어진 "서울시립" 시설). 데이터 오류가 아니라 실제로 그런 기관이 존재하는 것이라,
+    # 숨기거나 빼지 않고 눈에 띄는 경고로만 표시한다.
+    region_mismatch = bool(addr) and d["region"] not in d["addr"]
+    mismatch_note = (
+        f'<div class="warnbox" style="margin-top:8px;">⚠ 행정구역상 {d["region"]} 소속으로 등록되어 있지만, 실제 주소는 위와 같이 다른 지역이에요. 거리를 꼭 확인하세요.</div>'
+        if region_mismatch else ""
+    )
+
     return f"""
     <div class="card">
       <div class="card-top">
@@ -142,6 +151,7 @@ def render_facility_card(d):
           <div class="card-name">{name}</div>
           <div class="meta">{TYPE_LABEL.get(d["type"], d["type"])} · {d["region"]} · 정원 {d["cap"]}명 / 현원 {d["now"]}명</div>
           {addr_line}
+          {mismatch_note}
         </div>
         {vac_badge}
       </div>
@@ -275,12 +285,16 @@ function renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWa
       `;
     }
     const addrLine = d.addr ? `<div class="meta">${esc(d.addr)}${d.tel ? ' · ' + esc(d.tel) : ''}</div>` : `<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>`;
+    const mismatchNote = (d.addr && !d.addr.includes(d.region))
+      ? `<div class="warnbox" style="margin-top:8px;">⚠ 행정구역상 ${esc(d.region)} 소속으로 등록되어 있지만, 실제 주소는 위와 같이 다른 지역이에요. 거리를 꼭 확인하세요.</div>`
+      : '';
     card.innerHTML = `
       <div class="card-top">
         <div>
           <div class="card-name">${esc(d.name)}</div>
           <div class="meta">${TYPE_LABEL[d.type] || d.type} · ${esc(d.region)} · 정원 ${d.cap}명 / 현원 ${d.now}명</div>
           ${addrLine}
+          ${mismatchNote}
         </div>
         ${vacBadge}
       </div>
@@ -502,7 +516,6 @@ def render_district(region, items, generated_at):
     <span class="count" id="resultCount">{stats['n']}곳</span>
   </div>
 
-  <noscript><div id="results">{cards_html}</div></noscript>
   <div id="results">{cards_html}</div>
 
   <a class="backlink" href="../../">← 다른 구 보기 / 전체 비교로 돌아가기</a>
