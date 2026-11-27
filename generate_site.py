@@ -138,7 +138,11 @@ def render_facility_card(d):
     # 드물게 행정구역상 등록된 구와 실제 주소의 구가 다른 기관이 있음(예: 땅값 때문에 경기/강원 등
     # 다른 지역에 지어진 "서울시립" 시설). 데이터 오류가 아니라 실제로 그런 기관이 존재하는 것이라,
     # 숨기거나 빼지 않고 눈에 띄는 경고로만 표시한다.
-    region_mismatch = bool(addr) and d["region"] not in d["addr"]
+    # 주소 문자열에 구 이름이 "들어있는지"만 보면 부산 중구·인천 중구·부산 강서구처럼
+    # 서울과 같은 이름의 구가 있는 타 시/도 주소를 놓친다. 그래서 첫 토큰이 서울이고,
+    # 구 이름이 독립된 토큰으로 있을 때만 정상으로 본다. (클라이언트 JS도 같은 규칙)
+    tokens = d["addr"].split() if d.get("addr") else []
+    region_mismatch = bool(tokens) and not (tokens[0].startswith("서울") and d["region"] in tokens)
     mismatch_note = (
         f'<div class="warnbox" style="margin-top:8px;">⚠ 행정구역상 {d["region"]} 소속으로 등록되어 있지만, 실제 주소는 위와 같이 다른 지역이에요. 거리를 꼭 확인하세요.</div>'
         if region_mismatch else ""
@@ -285,7 +289,8 @@ function renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWa
       `;
     }
     const addrLine = d.addr ? `<div class="meta">${esc(d.addr)}${d.tel ? ' · <span class="nw">' + esc(d.tel) + '</span>' : ''}</div>` : `<div class="meta note">주소·전화번호 준비 중 — 기관명으로 검색해 확인해 주세요.</div>`;
-    const mismatchNote = (d.addr && !d.addr.includes(d.region))
+    const addrTokens = d.addr ? d.addr.trim().split(/\\s+/) : [];
+    const mismatchNote = (addrTokens.length && !(addrTokens[0].startsWith('서울') && addrTokens.includes(d.region)))
       ? `<div class="warnbox" style="margin-top:8px;">⚠ 행정구역상 ${esc(d.region)} 소속으로 등록되어 있지만, 실제 주소는 위와 같이 다른 지역이에요. 거리를 꼭 확인하세요.</div>`
       : '';
     card.innerHTML = `
