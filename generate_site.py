@@ -8,6 +8,8 @@ site/data.json (1,020개 입소형·주야간보호형 기관) 을 읽어서:
   - dist/gu/{slug}/index.html  : 구별 고정 페이지 (SEO용 — 서버사이드에서 실제 기관 목록을 HTML로
                                    렌더링 + 그 구 데이터만 담은 계산기)
   - dist/gu/{slug}/data.json   : 그 구만의 데이터 슬라이스 (계산기용, 용량 절감)
+  - dist/about/index.html      : 사이트 소개(데이터 출처·계산 방식·한계·독립성·문의)
+  - dist/privacy/index.html    : 개인정보처리방침
   - dist/sitemap.xml, dist/robots.txt
 
 왜 구마다 "진짜" 내용이 다른가 (브런치 템플릿 양산 사례 회피):
@@ -214,18 +216,61 @@ select{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-s
 .total b{font-size:17px;color:var(--accent);}
 .empty{text-align:center;color:var(--muted);padding:40px 0;font-size:14px;}
 .note{font-size:12px;color:var(--muted);margin-top:4px;}
-footer{color:var(--muted);font-size:12px;text-align:center;margin-top:30px;}
+footer{color:var(--muted);font-size:12px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border);}
+footer p{margin:0 0 10px;}
+.footer-links{font-size:13px;margin-bottom:12px;}
+.footer-links a{color:var(--ink);text-decoration:none;}
+.footer-links a:hover{text-decoration:underline;}
+.site-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:12px;margin-bottom:20px;border-bottom:1px solid var(--border);}
+.brand{font-weight:700;font-size:17px;color:var(--accent);text-decoration:none;letter-spacing:-0.02em;}
+.site-header nav a{font-size:14px;color:var(--muted);text-decoration:none;margin-left:14px;}
+.site-header nav a:hover{color:var(--accent);}
+.datestamp{display:inline-block;font-size:12px;color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:3px 10px;margin:0 0 18px;}
+.doc h2{font-size:16px;margin:28px 0 8px;}
+.doc p,.doc li{font-size:14px;}
+.doc ul{padding-left:20px;margin:6px 0;}
+.doc li{margin-bottom:4px;}
 .gulist{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin:14px 0 6px;}
 .gulist a{display:block;text-align:center;background:#fff;border:1px solid var(--border);border-radius:10px;padding:10px 6px;font-size:13px;color:var(--ink);text-decoration:none;}
 .gulist a:hover{border-color:var(--accent);color:var(--accent);}
 .backlink{display:inline-block;margin:18px 0 0;font-size:13px;color:var(--accent);text-decoration:none;}
 """
 
-FOOTER_HTML = """
+SITE_NAME = "요양비교"
+# 문의 이메일. None이면 소개 페이지의 문의 안내로 연결된다.
+# 예: Cloudflare Email Routing으로 contact@yoyangcompare.com을 만들어 개인 메일로 전달.
+CONTACT_EMAIL = None
+
+
+def contact_href(root):
+    return f"mailto:{CONTACT_EMAIL}" if CONTACT_EMAIL else f"{root}about/#contact"
+
+
+def header_html(root):
+    """root: 이 페이지에서 사이트 루트까지의 상대경로("" / "../" / "../../")."""
+    return f"""
+<header class="site-header">
+  <a class="brand" href="{root or './'}">{SITE_NAME}</a>
+  <nav><a href="{root}about/">소개</a></nav>
+</header>
+"""
+
+
+def datestamp_html(generated_at):
+    return f'<p class="datestamp">데이터 기준일 {generated_at} · 매일 새벽 자동 갱신</p>'
+
+
+def footer_html(root, generated_at):
+    return f"""
 <footer>
-  본 저작물은 '국민건강보험공단'에서 작성하여 공공데이터포털에 개방한 '장기요양기관 검색 서비스' 데이터를 이용하였으며, 해당 데이터는 'www.data.go.kr'에서 무료로 내려받을 수 있습니다.<br><br>
-  급여비용은 2026년 1월 보건복지부고시(제2025-247호) 기준 추정치이며 실제 청구액과 다를 수 있습니다. 비급여(식재료비 등)는 기관이 공시한 최근 등록값 기준 추정 범위입니다. 정확한 금액과 입소 가능 여부는 반드시 해당 기관 또는 국민건강보험공단(1577-1000)에 다시 확인하세요.<br><br>
-  이 사이트는 어떤 장기요양기관으로부터도 소개·알선 대가나 입소 연계 수수료를 받지 않으며, 받을 계획도 없습니다. 노인장기요양보험법 제35조제6항은 영리 목적으로 금전·물품 등을 제공하거나 약속하여 수급자를 특정 기관에 소개·알선·유인하는 행위를 금지하고 있습니다.
+  <div class="footer-links">
+    <a href="{root}about/">사이트 소개</a> · <a href="{root}privacy/">개인정보처리방침</a> · <a href="{contact_href(root)}">문의</a>
+  </div>
+  <p>데이터 기준일 {generated_at} (매일 새벽 국민건강보험공단 데이터로 자동 갱신)</p>
+  <p>본 저작물은 '국민건강보험공단'에서 작성하여 공공데이터포털에 개방한 '장기요양기관 검색 서비스' 데이터를 이용하였으며, 해당 데이터는 'www.data.go.kr'에서 무료로 내려받을 수 있습니다.</p>
+  <p>급여비용은 2026년 1월 보건복지부고시(제2025-247호) 기준 추정치이며 실제 청구액과 다를 수 있습니다. 비급여(식재료비 등)는 기관이 공시한 최근 등록값 기준 추정 범위입니다. 정확한 금액과 입소 가능 여부는 반드시 해당 기관 또는 국민건강보험공단(1577-1000)에 다시 확인하세요.</p>
+  <p>이 사이트는 어떤 장기요양기관으로부터도 소개·알선 대가나 입소 연계 수수료를 받지 않으며, 받을 계획도 없습니다. 노인장기요양보험법 제35조제6항은 영리 목적으로 금전·물품 등을 제공하거나 약속하여 수급자를 특정 기관에 소개·알선·유인하는 행위를 금지하고 있습니다.</p>
+  <p>© {SITE_NAME} · yoyangcompare.com</p>
 </footer>
 """
 
@@ -339,8 +384,10 @@ def render_home(data, generated_at):
 </head>
 <body>
 <div class="wrap">
-  <h1>서울 요양원·주야간보호 비교 (베타)</h1>
+  {header_html("")}
+  <h1>서울 요양원·주야간보호 비교</h1>
   <p class="sub">공공데이터포털(국민건강보험공단) 장기요양기관 데이터 기반. 빈자리·예상 비용을 조건별로 바로 계산해 드려요.</p>
+  {datestamp_html(generated_at)}
 
   <div id="mainFlow">
     <div class="step">
@@ -396,8 +443,7 @@ def render_home(data, generated_at):
     </div>
   </section>
 
-  {FOOTER_HTML}
-  <p class="note" style="text-align:center;">데이터 기준: {generated_at}</p>
+  {footer_html("", generated_at)}
 </div>
 
 <script>
@@ -473,8 +519,10 @@ def render_district(region, items, generated_at):
 </head>
 <body>
 <div class="wrap">
+  {header_html("../../")}
   <h1>{region} 요양원·주야간보호 비교</h1>
   <p class="sub">공공데이터포털(국민건강보험공단) 장기요양기관 데이터 기반. 등급·본인부담 유형을 바꾸면 예상 비용이 바로 다시 계산돼요.</p>
+  {datestamp_html(generated_at)}
   {intro}
 
   <div class="step">
@@ -512,8 +560,7 @@ def render_district(region, items, generated_at):
 
   <a class="backlink" href="../../">← 다른 구 보기 / 전체 비교로 돌아가기</a>
 
-  {FOOTER_HTML}
-  <p class="note" style="text-align:center;">데이터 기준: {generated_at}</p>
+  {footer_html("../../", generated_at)}
 </div>
 
 <script>
@@ -537,6 +584,97 @@ doRender();
 </html>
 """
     return html, data_json
+
+
+def render_doc_page(path, title, description, body, generated_at):
+    """소개·개인정보처리방침 같은 단순 문서 페이지. path 예: "about/"."""
+    return f"""<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{title} — {SITE_NAME}</title>
+<meta name="description" content="{description}">
+<link rel="canonical" href="{SITE_URL}/{path}">
+<style>{SHARED_CSS}</style>
+</head>
+<body>
+<div class="wrap">
+  {header_html("../")}
+  <h1>{title}</h1>
+  <div class="doc">
+  {body}
+  </div>
+  {footer_html("../", generated_at)}
+</div>
+</body>
+</html>
+"""
+
+
+def about_body():
+    contact = (
+        f'<a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>로 보내 주세요.'
+        if CONTACT_EMAIL else "문의 메일 주소를 준비하고 있어요. 곧 이곳에 안내할게요."
+    )
+    return f"""
+  <p>{SITE_NAME}는 서울 25개 구의 노인요양시설(요양원)·노인요양공동생활가정·주야간보호센터를 한곳에서 비교할 수 있게 만든 사이트예요. 부모님 모실 곳을 찾을 때 "지금 자리가 있는지", "한 달에 얼마나 드는지"를 기관마다 전화로 묻지 않아도 먼저 가늠해 볼 수 있도록 하는 게 목표예요.</p>
+
+  <h2>데이터는 어디서 오나요?</h2>
+  <p>국민건강보험공단이 공공데이터포털(data.go.kr)에 공개한 <b>장기요양기관 검색 서비스</b> 데이터를 사용해요. 기관 목록, 정원·현원, 주소·전화번호, 기관이 공시한 비급여 비용을 <b>매일 새벽 자동으로 다시 받아와</b> 사이트에 반영해요.</p>
+
+  <h2>비용은 어떻게 계산하나요?</h2>
+  <ul>
+    <li><b>급여 본인부담</b>: 보건복지부 고시(제2025-247호, 2026.1.1 시행)의 1일 수가 × 본인부담률(일반 20%·15%, 감경 대상은 더 낮음) × 30일로 계산한 추정치예요. 표준 인력 배치·대표 이용시간을 가정했어요.</li>
+    <li><b>비급여</b>: 식재료비·상급침실료 등 기관이 공단에 등록한 최근 비용을 월 단위로 환산한 범위예요.</li>
+    <li><b>예상 월 총비용</b> = 급여 본인부담 + 비급여 범위.</li>
+  </ul>
+
+  <h2>알아 두실 한계</h2>
+  <ul>
+    <li><b>빈자리</b>는 공단에 등록된 정원과 현원의 차이예요. 기관이 입소·퇴소를 입력하는 시점에 따라 실제와 며칠 차이가 날 수 있어요.</li>
+    <li><b>치매·와상·콧줄 등 상태별 수용 여부</b>는 공공데이터에 없어요. 반드시 기관에 직접 확인해 주세요.</li>
+    <li>일부 기관은 행정상 서울 소속이지만 실제 위치는 경기·강원 등에 있어요. 이런 곳은 카드에 경고로 표시해요.</li>
+    <li>실제 청구액은 기관·이용시간·추가 서비스에 따라 달라요. 정확한 금액은 기관이나 국민건강보험공단(1577-1000)에 확인해 주세요.</li>
+  </ul>
+
+  <h2>광고·소개 수수료를 받나요?</h2>
+  <p>어떤 장기요양기관으로부터도 소개·알선 대가나 입소 연계 수수료를 받지 않아요. 기관 순서는 빈자리 수 등 데이터 기준으로만 정해요. 노인장기요양보험법 제35조제6항은 영리 목적으로 수급자를 특정 기관에 소개·알선·유인하는 행위를 금지하고 있어요.</p>
+
+  <h2 id="contact">문의</h2>
+  <p>데이터 오류 제보나 제안은 {contact}</p>
+"""
+
+
+def privacy_body(effective_date):
+    contact = (
+        f'<a href="mailto:{CONTACT_EMAIL}">{CONTACT_EMAIL}</a>'
+        if CONTACT_EMAIL else '<a href="../about/#contact">사이트 소개의 문의 안내</a>'
+    )
+    return f"""
+  <p>{SITE_NAME}(yoyangcompare.com, 이하 "사이트")는 이용자의 개인정보를 소중히 여기며, 「개인정보 보호법」 등 관련 법령을 준수합니다.</p>
+
+  <h2>1. 수집하는 개인정보</h2>
+  <p>사이트는 회원가입·로그인·문의 양식이 없으며, 이용자의 이름·연락처 등 개인정보를 직접 수집하거나 저장하지 않습니다. 등급·본인부담 유형 선택 등 화면에서 입력하신 값은 이용자의 브라우저 안에서만 계산에 쓰이고 서버로 전송되지 않습니다.</p>
+
+  <h2>2. 자동으로 생성되는 정보</h2>
+  <p>사이트는 GitHub Pages(GitHub, Inc.)에서 호스팅되고 도메인 연결에는 Cloudflare, Inc.의 DNS를 사용합니다. 이 서비스 제공자들은 보안·서비스 운영을 위해 접속 IP 주소, 접속 일시, 브라우저 정보 등의 접속 기록을 자체 정책에 따라 처리할 수 있습니다. 사이트 운영자는 이 기록을 별도로 수집·열람하지 않습니다.</p>
+
+  <h2>3. 쿠키</h2>
+  <p>현재 사이트는 쿠키를 사용하지 않습니다. 향후 방문 통계 도구나 광고(예: Google AdSense)를 도입하는 경우, 사용 목적과 거부 방법을 이 방침에 먼저 반영하고 안내하겠습니다.</p>
+
+  <h2>4. 외부 링크</h2>
+  <p>기관 카드의 "지도" 링크는 네이버 지도로, 전화번호는 이용자 기기의 전화 앱으로 연결됩니다. 외부 서비스에서의 개인정보 처리는 각 서비스의 방침을 따릅니다.</p>
+
+  <h2>5. 문의</h2>
+  <p>개인정보 관련 문의는 {contact}를 이용해 주세요.</p>
+
+  <h2>6. 시행일</h2>
+  <p>이 방침은 {effective_date}부터 적용됩니다. 내용이 바뀌면 이 페이지에 변경 내용과 시행일을 함께 안내합니다.</p>
+"""
+
+
+PRIVACY_EFFECTIVE_DATE = "2026-11-27"
 
 
 def build():
@@ -567,6 +705,14 @@ def build():
         (page_dir / "data.json").write_text(data_json, encoding="utf-8")
         sitemap_urls.append(f"{SITE_URL}/gu/{slug}/")
 
+    for path, title, desc, body in (
+        ("about/", "사이트 소개", f"{SITE_NAME}의 데이터 출처, 비용 계산 방식, 알아 두실 한계와 문의 방법을 안내해요.", about_body()),
+        ("privacy/", "개인정보처리방침", f"{SITE_NAME} 개인정보처리방침.", privacy_body(PRIVACY_EFFECTIVE_DATE)),
+    ):
+        (DIST / path).mkdir(parents=True, exist_ok=True)
+        (DIST / path / "index.html").write_text(render_doc_page(path, title, desc, body, generated_at), encoding="utf-8")
+        sitemap_urls.append(f"{SITE_URL}/{path}")
+
     sitemap = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
     for u in sitemap_urls:
         sitemap += f"  <url><loc>{u}</loc></url>\n"
@@ -574,7 +720,7 @@ def build():
     (DIST / "sitemap.xml").write_text(sitemap, encoding="utf-8")
     (DIST / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE_URL}/sitemap.xml\n", encoding="utf-8")
 
-    print(f"생성 완료: {DIST} (구 페이지 {len(sitemap_urls)-1}개 + 홈 1개)")
+    print(f"생성 완료: {DIST} (구 페이지 {len(by_region)}개 + 홈 + 소개·개인정보처리방침, sitemap {len(sitemap_urls)}개 URL)")
     print(f"  데이터 기준일: {generated_at}")
 
 
