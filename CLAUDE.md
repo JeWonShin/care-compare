@@ -38,5 +38,5 @@ generate_site.py         → dist/ (실제 배포되는 정적 HTML 전체)
 - Settings → Actions → General → Actions permissions가 "Disable actions"로 돼 있으면 어떤 워크플로도 안 돌아감 — "Allow all actions and reusable workflows"로 설정+저장 필요.
 
 ## 아직 미정/보류
-- 커스텀 도메인 미정 — `generate_site.py`의 `SITE_URL` 상수가 placeholder(`https://care-compare.example.com`). 도메인 정하면 바꾸고 재배포(sitemap/canonical 갱신).
+- 커스텀 도메인 미정 — 현재 `generate_site.py`의 `SITE_URL`은 GitHub Pages 주소(`https://jewonshin.github.io/care-compare`). 도메인 정하면 바꾸고 재배포(sitemap/canonical 갱신).
 - `refresh-data.yml`의 첫 실제 스케줄 실행(과거엔 주1회였고 방금 매일로 변경) 모니터링 필요.

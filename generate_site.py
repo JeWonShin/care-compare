@@ -27,7 +27,7 @@ BASE = Path(__file__).parent
 SITE_DATA = BASE / "site" / "data.json"
 DIST = BASE / "dist"
 
-SITE_URL = "https://care-compare.example.com"  # TODO: 실제 도메인 확정되면 교체
+SITE_URL = "https://jewonshin.github.io/care-compare"  # 커스텀 도메인 연결 시 교체 (끝에 / 붙이지 말 것)
 
 GU_SLUG = {
     "종로구": "jongno-gu", "중구": "jung-gu", "용산구": "yongsan-gu",
