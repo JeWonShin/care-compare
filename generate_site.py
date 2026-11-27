@@ -72,6 +72,11 @@ def fmt_won(n):
     return f"{n:,.0f}원"
 
 
+def fmt_manwon(n):
+    """313,800 -> '31만' (숫자 카드용 짧은 표기)."""
+    return f"{round(n / 10000):,}만"
+
+
 def load_data():
     return json.loads(SITE_DATA.read_text(encoding="utf-8"))
 
@@ -183,25 +188,25 @@ body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo"
 .wrap{max-width:760px;margin:0 auto;padding:24px 16px 80px;}
 h1{font-size:20px;margin:0 0 4px;}
 h2.page-h2{font-size:17px;margin:28px 0 10px;}
-.sub{color:var(--muted);font-size:14px;margin:0 0 20px;}
-.intro{background:var(--accent-soft);border-radius:12px;padding:16px 18px;font-size:14px;margin-bottom:20px;}
+.sub{color:var(--muted);font-size:15px;margin:0 0 20px;}
+.intro{background:var(--accent-soft);border-radius:12px;padding:16px 18px;font-size:15px;margin-bottom:20px;}
 .step{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:14px;}
-.step h2{font-size:15px;margin:0 0 12px;color:var(--ink);}
+.step h2{font-size:16px;margin:0 0 12px;color:var(--ink);}
 .qmark{display:inline-block;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;text-align:center;line-height:20px;font-size:12px;margin-right:8px;}
-select{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-size:14px;background:#fff;color:var(--ink);}
-.toggle{display:flex;align-items:center;gap:8px;font-size:14px;}
+select{border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:15px;background:#fff;color:var(--ink);}
+.toggle{display:flex;align-items:center;gap:8px;font-size:15px;}
 .toggle input{width:18px;height:18px;}
-.warnbox{background:var(--warn-bg);border:1px solid #fcd9a8;color:var(--warn);border-radius:10px;padding:12px 14px;font-size:13px;margin-top:10px;}
+.warnbox{background:var(--warn-bg);border:1px solid #fcd9a8;color:var(--warn);border-radius:10px;padding:12px 14px;font-size:14px;margin-top:10px;}
 .result-head{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 10px;}
-.result-head h2{font-size:16px;margin:0;}
-.count{color:var(--muted);font-size:13px;}
+.result-head h2{font-size:17px;margin:0;}
+.count{color:var(--muted);font-size:14px;}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:10px;}
 .card-top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;}
 .card-top .badge{flex-shrink:0;margin-top:1px;}
-.card-name{font-size:15px;font-weight:600;}
-.badge{font-size:11px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
+.card-name{font-size:17px;font-weight:600;}
+.badge{font-size:12px;padding:3px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap;}
 .badge.full{background:#f3f4f6;color:#9ca3af;}
-.meta{color:var(--muted);font-size:13px;margin-top:4px;}
+.meta{color:var(--muted);font-size:14px;margin-top:4px;}
 .meta a{color:var(--accent);text-decoration:none;font-weight:500;}
 .meta a:hover{text-decoration:underline;}
 .infobox{background:var(--accent-soft);border-radius:12px;padding:14px 16px;font-size:13px;color:var(--ink);margin-bottom:14px;}
@@ -209,13 +214,26 @@ select{border:1px solid var(--border);border-radius:10px;padding:9px 12px;font-s
 .infobox p+p{margin-top:8px;}
 .gu-section{margin-top:36px;}
 .gu-section .note{margin-top:0;}
-.cost-row{display:flex;gap:18px;margin-top:10px;font-size:13px;flex-wrap:wrap;}
-.cost-row .item b{display:block;font-size:15px;color:var(--ink);}
-.cost-row .item span{color:var(--muted);font-size:12px;}
-.total{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);font-size:14px;}
-.total b{font-size:17px;color:var(--accent);}
+.cost-row{display:flex;gap:20px;margin-top:12px;font-size:14px;flex-wrap:wrap;}
+.cost-row .item b{display:block;font-size:16px;color:var(--ink);}
+.cost-row .item span{color:var(--muted);font-size:13px;}
+.total{margin-top:10px;padding-top:10px;border-top:1px dashed var(--border);font-size:15px;}
+.total b{font-size:19px;color:var(--accent);}
+details.more{margin-top:8px;font-size:13px;color:var(--muted);}
+details.more summary{cursor:pointer;color:var(--accent);font-weight:500;list-style:none;padding:4px 0;}
+details.more summary::-webkit-details-marker{display:none;}
+details.more summary::before{content:"ⓘ ";}
+details.more[open] summary{margin-bottom:4px;}
+details.more p{margin:0 0 6px;}
+.stats{display:grid;grid-template-columns:1fr 1fr 1.5fr;gap:8px;margin-bottom:12px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 4px;text-align:center;}
+.stat b{display:block;font-size:20px;color:var(--accent);letter-spacing:-0.02em;}
+.stat b.range{font-size:16px;white-space:nowrap;line-height:30px;}
+.stat span{display:block;white-space:nowrap;font-size:12px;color:var(--muted);margin-top:2px;}
+.sortbar{display:flex;align-items:center;gap:8px;}
+.sortbar select{padding:6px 10px;font-size:14px;}
 .empty{text-align:center;color:var(--muted);padding:40px 0;font-size:14px;}
-.note{font-size:12px;color:var(--muted);margin-top:4px;}
+.note{font-size:13px;color:var(--muted);margin-top:4px;}
 footer{color:var(--muted);font-size:12px;margin-top:40px;padding-top:20px;border-top:1px solid var(--border);}
 footer p{margin:0 0 10px;}
 .footer-links{font-size:13px;margin-bottom:12px;}
@@ -300,7 +318,7 @@ const fmt = n => n.toLocaleString('ko-KR') + '원';
 const esc = s => (s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let DATA = [];
 
-function renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWarnEl){
+function renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWarnEl, sortEl){
   const grade = gradeEl.value, burden = burdenEl.value, vacancyOnly = vacEl.checked;
   if(gradeWarnEl){
     if(['3','4','5'].includes(grade)){
@@ -317,7 +335,15 @@ function renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWa
     const totalMax = copay != null ? copay + d.nbMax : null;
     return {...d, copay, totalMin, totalMax};
   });
-  filtered.sort((a,b) => (b.vac - a.vac) || ((a.totalMin ?? 1e15) - (b.totalMin ?? 1e15)));
+  const sortKey = sortEl ? sortEl.value : 'vac';
+  // 비급여 정보가 없는 기관(0~0)은 총비용이 실제보다 싸 보이므로 비용순에서는 뒤로 보낸다.
+  const costKey = d => (d.totalMin == null || (d.nbMin === 0 && d.nbMax === 0)) ? 1e15 : d.totalMin;
+  const SORTERS = {
+    vac:  (a,b) => (b.vac - a.vac) || (costKey(a) - costKey(b)),
+    cost: (a,b) => (costKey(a) - costKey(b)) || (b.vac - a.vac),
+    name: (a,b) => a.name.localeCompare(b.name, 'ko'),
+  };
+  filtered.sort(SORTERS[sortKey] || SORTERS.vac);
   countEl.textContent = `${filtered.length}곳`;
   resultsEl.innerHTML = '';
   if(filtered.length === 0){
@@ -412,8 +438,11 @@ def render_home(data, generated_at):
           <option value="의료급여수급권자">의료급여수급권자(면제)</option>
         </select>
       </div>
-      <div class="note">등급·부담유형에 따라 아래 예상 비용이 자동으로 바뀌어요. 모르면 일단 "일반대상자"로 보시고, 나중에 공단(1577-1000)에 확인해 보세요.</div>
-      <div class="note">※ 급여비용은 보건복지부고시(2025-247호, 2026.1.1 시행) 기준 "표준 배치비율·대표 이용시간" 가정값이에요. 요양보호사 배치비율이 기준 미달인 시설은 노인요양시설 기준 1일 최대 4,550원(월 약 13.7만원) 더 낮을 수 있고, 주야간보호는 실제 이용시간(3~13시간+)에 따라 수가가 달라요. 정확한 금액은 반드시 기관에 다시 확인하세요.</div>
+      <div class="note">모르면 일단 "1등급·일반대상자"로 보시고, 나중에 공단(1577-1000)에 확인해 보세요.</div>
+      <details class="more"><summary>비용 계산 기준 보기</summary>
+        <p>급여비용은 보건복지부고시(2025-247호, 2026.1.1 시행) 기준 "표준 배치비율·대표 이용시간" 가정값이에요.</p>
+        <p>요양보호사 배치비율이 기준 미달인 시설은 노인요양시설 기준 1일 최대 4,550원(월 약 13.7만원) 더 낮을 수 있고, 주야간보호는 실제 이용시간(3~13시간+)에 따라 수가가 달라요. 정확한 금액은 반드시 기관에 다시 확인하세요.</p>
+      </details>
       <div id="gradeWarn" class="warnbox" style="display:none"></div>
     </div>
 
@@ -430,7 +459,12 @@ def render_home(data, generated_at):
 
     <div class="result-head">
       <h2>조건에 맞는 시설</h2>
-      <span class="count" id="resultCount"></span>
+      <label class="sortbar"><span class="count" id="resultCount"></span>
+        <select id="sortSelect" aria-label="정렬">
+          <option value="vac">빈자리 많은 순</option>
+          <option value="cost">예상 비용 낮은 순</option>
+          <option value="name">이름순</option>
+        </select></label>
     </div>
     <div id="results"></div>
   </div>
@@ -466,14 +500,15 @@ fetch('data.json').then(r => r.json()).then(data => {{
   const resultsEl = document.getElementById('results');
   const countEl = document.getElementById('resultCount');
   const gradeWarnEl = document.getElementById('gradeWarn');
+  const sortEl = document.getElementById('sortSelect');
 
   function doRender(){{
     const region = sel.value;
     const list = DATA.filter(d => d.region === region);
-    renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWarnEl);
+    renderCards(list, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWarnEl, sortEl);
   }}
 
-  [sel, gradeEl, burdenEl, vacEl].forEach(el => el.addEventListener('change', doRender));
+  [sel, gradeEl, burdenEl, vacEl, sortEl].forEach(el => el.addEventListener('change', doRender));
   doRender();
 }}).catch(err => {{
   document.getElementById('results').innerHTML = '<div class="empty">데이터를 불러오지 못했어요.</div>';
@@ -495,7 +530,17 @@ def render_district(region, items, generated_at):
         if stats["cost_min"] is not None else "비용 추정에 필요한 데이터가 아직 부족해요."
     )
 
+    cost_tile = (
+        f'<b class="range">{fmt_manwon(stats["cost_min"])}~{fmt_manwon(stats["cost_max"])}</b><span>월 예상 비용</span>'
+        if stats["cost_min"] is not None else '<b>-</b><span>월 예상 비용</span>'
+    )
+    # 숫자 카드는 한눈에 보기용, 아래 문장은 같은 실제 통계를 문장으로 풀어쓴 것(구마다 다른 내용 → SEO).
     intro = f"""
+    <div class="stats">
+      <div class="stat"><b>{stats['n']}곳</b><span>등록 기관</span></div>
+      <div class="stat"><b>{stats['with_vac']}곳</b><span>빈자리 있음</span></div>
+      <div class="stat">{cost_tile}</div>
+    </div>
     <div class="intro">
       {region}에는 현재 공공데이터포털(국민건강보험공단)에 등록된 노인요양시설·주야간보호기관이
       <b>{stats['n']}곳</b> 있고({type_desc}), 이 중 <b>{stats['with_vac']}곳</b>에 지금 빈자리가 있어요.
@@ -542,7 +587,9 @@ def render_district(region, items, generated_at):
         <option value="의료급여수급권자">의료급여수급권자(면제)</option>
       </select>
     </div>
-    <div class="note">※ 급여비용은 보건복지부고시(2025-247호, 2026.1.1 시행) 기준 "표준 배치비율·대표 이용시간" 가정값이에요. 정확한 금액은 반드시 기관에 다시 확인하세요.</div>
+    <details class="more"><summary>비용 계산 기준 보기</summary>
+      <p>급여비용은 보건복지부고시(2025-247호, 2026.1.1 시행) 기준 "표준 배치비율·대표 이용시간" 가정값이에요. 요양보호사 배치비율이 기준 미달인 시설은 더 낮을 수 있고, 주야간보호는 실제 이용시간에 따라 수가가 달라요. 정확한 금액은 반드시 기관에 다시 확인하세요.</p>
+    </details>
     <div id="gradeWarn" class="warnbox" style="display:none"></div>
   </div>
 
@@ -553,7 +600,12 @@ def render_district(region, items, generated_at):
 
   <div class="result-head">
     <h2>{region} 기관 목록</h2>
-    <span class="count" id="resultCount">{stats['n']}곳</span>
+    <label class="sortbar"><span class="count" id="resultCount">{stats['n']}곳</span>
+        <select id="sortSelect" aria-label="정렬">
+          <option value="vac">빈자리 많은 순</option>
+          <option value="cost">예상 비용 낮은 순</option>
+          <option value="name">이름순</option>
+        </select></label>
   </div>
 
   <div id="results">{cards_html}</div>
@@ -573,11 +625,12 @@ const vacEl = document.getElementById('vacancyOnly');
 const resultsEl = document.getElementById('results');
 const countEl = document.getElementById('resultCount');
 const gradeWarnEl = document.getElementById('gradeWarn');
+const sortEl = document.getElementById('sortSelect');
 
 function doRender(){{
-  renderCards(DATA, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWarnEl);
+  renderCards(DATA, gradeEl, burdenEl, vacEl, resultsEl, countEl, gradeWarnEl, sortEl);
 }}
-[gradeEl, burdenEl, vacEl].forEach(el => el.addEventListener('change', doRender));
+[gradeEl, burdenEl, vacEl, sortEl].forEach(el => el.addEventListener('change', doRender));
 doRender();
 </script>
 </body>
