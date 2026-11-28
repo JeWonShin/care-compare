@@ -26,6 +26,7 @@ import time
 import urllib.request
 import urllib.parse
 import urllib.error
+import http.client
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -89,6 +90,32 @@ class TrafficExceededError(Exception):
     """해당 오퍼레이션의 일일 트래픽(10,000건) 한도를 초과했을 때 발생."""
 
 
+
+# 공공데이터포털 게이트웨이는 가끔 TLS 핸드셰이크 타임아웃·연결 끊김·5xx를 낸다.
+# 매일 6천 건 넘게 호출하는 전체 재수집이 일시적 오류 한 번에 통째로 실패하지 않도록,
+# 네트워크성 오류와 5xx만 지수 백오프로 재시도한다(4xx·트래픽 초과는 재시도하지 않음).
+RETRY_ATTEMPTS = 5
+RETRY_BASE_SEC = 2
+REQUEST_TIMEOUT_SEC = 30
+
+
+def _urlopen_with_retry(req):
+    for attempt in range(1, RETRY_ATTEMPTS + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT_SEC) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as e:
+            if e.code < 500 or attempt == RETRY_ATTEMPTS:
+                raise
+            reason = f"HTTP {e.code}"
+        except (urllib.error.URLError, TimeoutError, ConnectionError, http.client.HTTPException) as e:
+            if attempt == RETRY_ATTEMPTS:
+                raise
+            reason = repr(e)
+        wait = RETRY_BASE_SEC * 2 ** (attempt - 1)
+        print(f"  [재시도 {attempt}/{RETRY_ATTEMPTS - 1}] {reason} — {wait}초 후 다시 시도", flush=True)
+        time.sleep(wait)
+
 def call_api(base_url: str, params: dict) -> ET.Element:
     """공공데이터포털 표준 REST API 호출 (XML 응답).
 
@@ -107,8 +134,7 @@ def call_api(base_url: str, params: dict) -> ET.Element:
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            body = resp.read()
+        body = _urlopen_with_retry(req)
     except urllib.error.HTTPError as e:
         err_body = e.read().decode("utf-8", errors="replace")
         if "LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR" in err_body:
